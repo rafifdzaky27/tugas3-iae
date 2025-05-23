@@ -4,20 +4,58 @@ Selamat datang di Star Wars GraphQL API! Aplikasi ini adalah API GraphQL yang me
 
 ## Daftar Isi
 
+- [Pengenalan GraphQL](#pengenalan-graphql)
 - [Teknologi yang Digunakan](#teknologi-yang-digunakan)
+- [Struktur Proyek](#struktur-proyek)
 - [Struktur Database](#struktur-database)
 - [Relasi Antar Tabel](#relasi-antar-tabel)
 - [Cara Kerja API](#cara-kerja-api)
-- [Contoh Query](#contoh-query)
+- [Contoh Query Terintegrasi](#contoh-query-terintegrasi)
 - [Contoh Mutation](#contoh-mutation)
+- [Menjalankan API](#menjalankan-api)
+
+## Pengenalan GraphQL
+
+GraphQL adalah bahasa query untuk API dan runtime untuk mengeksekusi query tersebut dengan data yang ada. GraphQL memberikan deskripsi lengkap dan mudah dipahami tentang data dalam API Anda, memberikan klien kekuatan untuk meminta persis apa yang mereka butuhkan dan tidak lebih, memudahkan evolusi API dari waktu ke waktu, dan memungkinkan alat pengembangan yang kuat.
+
+### Perbedaan dengan REST API
+
+1. **Single Endpoint**: GraphQL hanya menggunakan satu endpoint, biasanya `/graphql`, tidak seperti REST yang memiliki banyak endpoint.
+
+2. **Client-Specified Queries**: Client menentukan struktur data yang diinginkan, tidak seperti REST di mana server menentukan struktur respons.
+
+3. **No Over-fetching or Under-fetching**: Client hanya mendapatkan data yang diminta, tidak lebih dan tidak kurang.
+
+4. **Strongly Typed**: GraphQL memiliki sistem tipe yang kuat, memungkinkan validasi query pada waktu kompilasi.
+
+### Komponen Utama GraphQL
+
+1. **Schema**: Mendefinisikan tipe data dan operasi yang tersedia di API.
+
+2. **Query**: Operasi untuk membaca data (mirip dengan GET di REST).
+
+3. **Mutation**: Operasi untuk memodifikasi data (mirip dengan POST, PUT, DELETE di REST).
+
+4. **Resolver**: Fungsi yang menentukan bagaimana data untuk field tertentu diambil atau dimodifikasi.
 
 ## Teknologi yang Digunakan
 
-- **Python 3.8+**: Bahasa pemrograman utama
-- **FastAPI**: Web framework untuk membuat API
-- **Ariadne**: Library GraphQL untuk Python
-- **SQLite**: Database ringan berbasis file
-- **Uvicorn**: Server ASGI untuk menjalankan aplikasi FastAPI
+- **Python 3.8+**: Bahasa pemrograman utama yang digunakan untuk mengembangkan backend API.
+- **FastAPI**: Web framework modern dan cepat untuk Python yang digunakan untuk membuat API. FastAPI mendukung asynchronous programming dan memiliki performa tinggi.
+- **Ariadne**: Library GraphQL untuk Python yang menggunakan pendekatan schema-first. Ariadne memudahkan integrasi GraphQL dengan Python dan FastAPI.
+- **SQLite**: Database ringan berbasis file yang digunakan untuk menyimpan data. SQLite ideal untuk aplikasi kecil hingga menengah dan tidak memerlukan server database terpisah.
+- **Uvicorn**: Server ASGI (Asynchronous Server Gateway Interface) untuk menjalankan aplikasi FastAPI dengan performa tinggi.
+
+## Struktur Proyek
+
+Proyek ini terdiri dari beberapa file utama:
+
+- **main.py**: File utama yang menjalankan server FastAPI dan mengintegrasikan GraphQL.
+- **database.py**: Menangani koneksi database dan mendefinisikan struktur tabel.
+- **schema.graphql**: Mendefinisikan tipe data, query, dan mutation yang tersedia di API GraphQL.
+- **resolvers.py**: Berisi fungsi resolver yang mengambil atau memodifikasi data sesuai dengan permintaan GraphQL.
+- **seed.py**: Mengisi database dengan data awal untuk testing.
+- **starwars.db**: File database SQLite yang menyimpan semua data.
 
 ## Struktur Database
 
@@ -209,140 +247,156 @@ Format data:
 
 ## Cara Kerja API
 
-API ini dibangun menggunakan arsitektur GraphQL, yang memungkinkan client untuk meminta data yang spesifik yang mereka butuhkan. Berikut adalah komponen utama:
+API ini dibangun menggunakan arsitektur GraphQL, yang memungkinkan client untuk meminta data yang spesifik yang mereka butuhkan. Berikut adalah alur kerja API:
 
-1. **Schema GraphQL** (`schema.graphql`): Mendefinisikan tipe data, query, dan mutation yang tersedia.
-2. **Resolvers** (`resolvers.py`): Fungsi Python yang mengambil atau memodifikasi data sesuai dengan permintaan GraphQL.
-3. **Database** (`database.py`): Menangani koneksi dan operasi database.
-4. **Seed Data** (`seed.py`): Mengisi database dengan data awal untuk testing.
-5. **Server** (`main.py`): Menjalankan server FastAPI dan mengintegrasikan GraphQL.
+### 1. Definisi Schema (schema.graphql)
 
-## Contoh Query
+Schema GraphQL mendefinisikan struktur data dan operasi yang tersedia. Ini mencakup:
+- **Types**: Mendefinisikan struktur objek data (Character, Planet, Starship, dll)
+- **Queries**: Mendefinisikan operasi untuk membaca data
+- **Mutations**: Mendefinisikan operasi untuk memodifikasi data
 
-Berikut adalah contoh query yang dapat Anda gunakan untuk mengakses data dari API:
+Contoh definisi type di schema:
+```graphql
+type Character {
+  id: ID!
+  name: String!
+  species: String
+  homePlanet: Planet
+  pilotedStarships: [Starship!]!
+  weapons: [Weapon!]!
+  vehicles: [Vehicle!]!
+  forceOrders: [CharacterForceOrder!]!
+}
+```
 
-### 1. Mendapatkan Semua Karakter
+### 2. Implementasi Resolver (resolvers.py)
+
+Resolver adalah fungsi yang menentukan bagaimana data diambil atau dimodifikasi. Setiap field dalam schema memiliki resolver terkait.
+
+Contoh resolver untuk query:
+```python
+@query.field("character")
+def resolve_character(_, info, id):
+    conn = get_db_connection()
+    try:
+        character = conn.execute("SELECT id, name, species, home_planet_id FROM characters WHERE id = ?", (id,)).fetchone()
+        return dict(character) if character else None
+    finally:
+        conn.close()
+```
+
+### 3. Alur Eksekusi Query
+
+Ketika client mengirim query GraphQL:
+1. Server menerima query dan memvalidasinya terhadap schema
+2. Jika valid, server memanggil resolver yang sesuai untuk setiap field yang diminta
+3. Resolver mengambil data dari database
+4. Server menggabungkan hasil dan mengembalikannya ke client dalam format yang diminta
+
+### 4. Alur Eksekusi Mutation
+
+Untuk mutation, prosesnya serupa:
+1. Server menerima mutation dan memvalidasinya
+2. Resolver mutation dipanggil dengan input yang diberikan
+3. Resolver melakukan perubahan pada database
+4. Server mengembalikan hasil sesuai dengan yang diminta dalam mutation
+
+### 5. Integrasi dengan FastAPI (main.py)
+
+FastAPI digunakan sebagai web framework yang mengekspos endpoint GraphQL:
+```python
+from fastapi import FastAPI
+from ariadne import load_schema_from_path, make_executable_schema
+from ariadne.asgi import GraphQL
+
+app = FastAPI()
+type_defs = load_schema_from_path("schema.graphql")
+schema = make_executable_schema(type_defs, resolvers)
+graphql_app = GraphQL(schema, debug=True)
+
+app.mount("/graphql", graphql_app)
+```
+
+## Contoh Query Terintegrasi
+
+Berikut adalah contoh query terintegrasi yang dapat Anda gunakan untuk mengakses data dari semua tabel dalam satu permintaan. Ini menunjukkan kekuatan GraphQL dalam mengambil data yang saling berhubungan dalam satu query.
+
+### Query Lengkap untuk Eksplorasi Star Wars Universe
 
 ```graphql
-query {
+query StarWarsExplorer {
+  # Mendapatkan semua karakter dengan detail lengkap
   allCharacters {
     id
     name
     species
     homePlanet {
+      id
       name
       climate
-    }
-  }
-}
-```
-
-### 2. Mendapatkan Detail Karakter Beserta Relasi
-
-```graphql
-query {
-  character(id: "1") {
-    id
-    name
-    species
-    homePlanet {
-      name
       terrain
     }
     pilotedStarships {
+      id
       name
       model
+      manufacturer
     }
     weapons {
+      id
       name
       type
       damage
+      range
     }
     vehicles {
+      id
       name
       model
+      manufacturer
       maxSpeed
     }
     forceOrders {
-      forceOrder {
-        name
-        side
-      }
       rank
       joinedYear
+      forceOrder {
+        id
+        name
+        side
+        description
+        foundingYear
+      }
     }
   }
-}
-```
-
-### 3. Mendapatkan Semua Planet dan Penduduknya
-
-```graphql
-query {
+  
+  # Mendapatkan semua planet dan penduduknya
   allPlanets {
     id
     name
     climate
     terrain
     residents {
+      id
       name
       species
     }
   }
-}
-```
-
-### 4. Mendapatkan Detail Planet Tertentu
-
-```graphql
-query {
-  planet(id: "1") {
-    name
-    climate
-    terrain
-    residents {
-      name
-    }
-  }
-}
-```
-
-### 5. Mendapatkan Semua Kapal dan Pilotnya
-
-```graphql
-query {
+  
+  # Mendapatkan semua kapal dan pilotnya
   allStarships {
     id
     name
     model
     manufacturer
     pilots {
+      id
       name
       species
     }
   }
-}
-```
-
-### 6. Mendapatkan Detail Kapal Tertentu
-
-```graphql
-query {
-  starship(id: "1") {
-    name
-    model
-    manufacturer
-    pilots {
-      name
-    }
-  }
-}
-```
-
-### 7. Mendapatkan Semua Senjata dan Penggunanya
-
-```graphql
-query {
+  
+  # Mendapatkan semua senjata dan penggunanya
   allWeapons {
     id
     name
@@ -350,33 +404,13 @@ query {
     damage
     range
     wielders {
-      name
-    }
-  }
-}
-```
-
-### 8. Mendapatkan Detail Senjata Tertentu
-
-```graphql
-query {
-  weapon(id: "1") {
-    name
-    type
-    damage
-    range
-    wielders {
+      id
       name
       species
     }
   }
-}
-```
-
-### 9. Mendapatkan Semua Kendaraan dan Pengemudinya
-
-```graphql
-query {
+  
+  # Mendapatkan semua kendaraan dan pengemudinya
   allVehicles {
     id
     name
@@ -384,33 +418,13 @@ query {
     manufacturer
     maxSpeed
     drivers {
-      name
-    }
-  }
-}
-```
-
-### 10. Mendapatkan Detail Kendaraan Tertentu
-
-```graphql
-query {
-  vehicle(id: "1") {
-    name
-    model
-    manufacturer
-    maxSpeed
-    drivers {
+      id
       name
       species
     }
   }
-}
-```
-
-### 11. Mendapatkan Semua Force Order dan Anggotanya
-
-```graphql
-query {
+  
+  # Mendapatkan semua Force Order dan anggotanya
   allForceOrders {
     id
     name
@@ -418,35 +432,144 @@ query {
     description
     foundingYear
     members {
+      rank
+      joinedYear
       character {
+        id
         name
         species
       }
-      rank
-      joinedYear
     }
   }
 }
 ```
 
-### 12. Mendapatkan Detail Force Order Tertentu
+### Query Fokus pada Karakter Tertentu
+
+Jika Anda ingin fokus pada satu karakter dan semua data terkaitnya:
 
 ```graphql
-query {
-  forceOrder(id: "1") {
+query CharacterDetail($characterId: ID!) {
+  character(id: $characterId) {
+    id
+    name
+    species
+    homePlanet {
+      id
+      name
+      climate
+      terrain
+      residents {
+        id
+        name
+        species
+      }
+    }
+    pilotedStarships {
+      id
+      name
+      model
+      manufacturer
+      pilots {
+        id
+        name
+      }
+    }
+    weapons {
+      id
+      name
+      type
+      damage
+      range
+      wielders {
+        id
+        name
+      }
+    }
+    vehicles {
+      id
+      name
+      model
+      maxSpeed
+      drivers {
+        id
+        name
+      }
+    }
+    forceOrders {
+      rank
+      joinedYear
+      forceOrder {
+        id
+        name
+        side
+        description
+        foundingYear
+        members {
+          rank
+          character {
+            id
+            name
+          }
+        }
+      }
+    }
+  }
+}
+```
+
+Variables untuk query ini:
+```json
+{
+  "characterId": "1"
+}
+```
+
+### Query Fokus pada Force Order
+
+Untuk menjelajahi Force Order tertentu dan semua anggotanya dengan detail lengkap:
+
+```graphql
+query ForceOrderDetail($forceOrderId: ID!) {
+  forceOrder(id: $forceOrderId) {
+    id
     name
     side
     description
     foundingYear
     members {
-      character {
-        name
-        species
-      }
       rank
       joinedYear
+      character {
+        id
+        name
+        species
+        homePlanet {
+          name
+          climate
+        }
+        weapons {
+          name
+          type
+        }
+        pilotedStarships {
+          name
+          model
+        }
+        vehicles {
+          name
+          maxSpeed
+        }
+      }
     }
   }
+}
+```
+
+Variables untuk query ini:
+```json
+{
+  "forceOrderId": "1"
 }
 ```
 
@@ -781,26 +904,57 @@ mutation {
 
 1. Pastikan Python 3.8+ terinstal
 2. Buat dan aktifkan virtual environment:
-   ```
+   ```bash
    python -m venv venv
    source venv/bin/activate  # Windows: venv\Scripts\activate
    ```
 3. Instal dependensi:
-   ```
+   ```bash
    pip install fastapi uvicorn ariadne
    ```
 4. Inisialisasi database:
-   ```
+   ```bash
    python database.py
    python seed.py
    ```
 5. Jalankan server:
-   ```
+   ```bash
    uvicorn main:app --reload
    ```
 6. Buka GraphQL Playground di browser:
    ```
    http://localhost:8000/graphql
    ```
+
+### Menggunakan GraphQL Playground
+
+GraphQL Playground adalah IDE interaktif untuk menguji query dan mutation GraphQL. Berikut cara menggunakannya:
+
+1. **Menulis Query**: Tulis query di panel kiri
+2. **Menjalankan Query**: Klik tombol play di tengah
+3. **Melihat Hasil**: Hasil akan ditampilkan di panel kanan
+4. **Menggunakan Variables**: Untuk query yang membutuhkan variabel, gunakan tab "Variables" di bawah panel query
+5. **Menjelajahi Schema**: Gunakan tab "Schema" di sisi kanan untuk melihat dokumentasi API
+
+Contoh penggunaan dengan variabel:
+
+1. Di panel query, tulis:
+   ```graphql
+   query CharacterDetail($id: ID!) {
+     character(id: $id) {
+       name
+       species
+     }
+   }
+   ```
+
+2. Di panel variabel, tulis:
+   ```json
+   {
+     "id": "1"
+   }
+   ```
+
+3. Klik tombol play untuk menjalankan query
 
 Selamat mengeksplorasi Star Wars GraphQL API!
