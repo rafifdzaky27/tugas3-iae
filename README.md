@@ -575,9 +575,294 @@ Variables untuk query ini:
 
 ## Contoh Mutation
 
-Berikut adalah contoh mutation untuk memodifikasi data:
+Berikut adalah contoh mutation untuk memodifikasi data. Termasuk contoh mutation terintegrasi yang menunjukkan bagaimana melakukan beberapa operasi sekaligus.
 
-### 1. Membuat Planet Baru
+### Mutation Terintegrasi
+
+#### 1. Membuat Karakter Lengkap dengan Relasi
+
+Mutation ini membuat karakter baru, kemudian menambahkan senjata, kapal, kendaraan, dan keanggotaan Force Order dalam satu operasi:
+
+```graphql
+mutation CreateCompleteCharacter {
+  # Langkah 1: Buat karakter baru
+  newCharacter: createCharacter(input: {
+    name: "Ahsoka Tano",
+    species: "Togruta",
+    homePlanetId: 4
+  }) {
+    id
+    name
+    species
+  }
+  
+  # Langkah 2: Buat senjata baru untuk karakter
+  newWeapon: createWeapon(input: {
+    name: "Dual Lightsabers",
+    type: "Lightsaber",
+    damage: 110,
+    range: "Close"
+  }) {
+    id
+    name
+  }
+  
+  # Langkah 3: Buat kendaraan baru untuk karakter
+  newVehicle: createVehicle(input: {
+    name: "Jedi Starfighter",
+    model: "Delta-7B Aethersprite",
+    manufacturer: "Kuat Systems Engineering",
+    maxSpeed: 1150
+  }) {
+    id
+    name
+  }
+}
+```
+
+Setelah mutation pertama berhasil, gunakan ID yang dihasilkan untuk membuat relasi:
+
+```graphql
+mutation AssignRelationsToCharacter($characterId: ID!, $weaponId: ID!, $vehicleId: ID!) {
+  # Langkah 4: Hubungkan karakter dengan senjata
+  assignWeapon: assignWeapon(input: {
+    characterId: $characterId,
+    weaponId: $weaponId
+  }) {
+    id
+    name
+  }
+  
+  # Langkah 5: Hubungkan karakter dengan kendaraan
+  assignVehicle: assignVehicle(input: {
+    characterId: $characterId,
+    vehicleId: $vehicleId
+  }) {
+    id
+    name
+  }
+  
+  # Langkah 6: Hubungkan karakter dengan Force Order
+  assignForceOrder: assignForceOrder(input: {
+    characterId: $characterId,
+    forceOrderId: "1", # ID Jedi Order
+    rank: "Jedi Padawan",
+    joinedYear: -22
+  }) {
+    id
+    name
+  }
+}
+```
+
+Variables untuk mutation kedua:
+```json
+{
+  "characterId": "8", # ID dari karakter yang baru dibuat
+  "weaponId": "6", # ID dari senjata yang baru dibuat
+  "vehicleId": "6" # ID dari kendaraan yang baru dibuat
+}
+```
+
+#### 2. Membuat Ekspedisi Star Wars
+
+Mutation ini membuat planet baru, kapal baru, dan karakter baru yang berasal dari planet tersebut dan mengemudikan kapal tersebut:
+
+```graphql
+mutation CreateStarWarsExpedition {
+  # Langkah 1: Buat planet baru
+  newPlanet: createPlanet(input: {
+    name: "Ilum",
+    climate: "Frigid",
+    terrain: "Ice caves, Tundra"
+  }) {
+    id
+    name
+  }
+  
+  # Langkah 2: Buat kapal baru
+  newStarship: createStarship(input: {
+    name: "The Mantis",
+    model: "S-161 XL luxury yacht",
+    manufacturer: "Latero Spaceworks"
+  }) {
+    id
+    name
+  }
+  
+  # Langkah 3: Buat Force Order baru
+  newForceOrder: createForceOrder(input: {
+    name: "Jedi Fallen Order",
+    side: "Light",
+    description: "Jedi survivors after Order 66",
+    foundingYear: 14
+  }) {
+    id
+    name
+  }
+}
+```
+
+Kemudian, buat karakter dan hubungkan semua entitas:
+
+```graphql
+mutation CreateExpeditionMembers($planetId: ID!, $starshipId: ID!, $forceOrderId: ID!) {
+  # Buat karakter pertama
+  character1: createCharacter(input: {
+    name: "Cal Kestis",
+    species: "Human",
+    homePlanetId: $planetId
+  }) {
+    id
+    name
+  }
+  
+  # Buat karakter kedua
+  character2: createCharacter(input: {
+    name: "Cere Junda",
+    species: "Human",
+    homePlanetId: $planetId
+  }) {
+    id
+    name
+  }
+}
+```
+
+Terakhir, hubungkan karakter dengan kapal dan Force Order:
+
+```graphql
+mutation ConnectExpeditionMembers(
+  $char1Id: ID!, 
+  $char2Id: ID!, 
+  $starshipId: ID!, 
+  $forceOrderId: ID!
+) {
+  # Hubungkan karakter 1 dengan kapal
+  assign1: assignStarship(input: {
+    characterId: $char1Id,
+    starshipId: $starshipId
+  }) {
+    id
+  }
+  
+  # Hubungkan karakter 2 dengan kapal
+  assign2: assignStarship(input: {
+    characterId: $char2Id,
+    starshipId: $starshipId
+  }) {
+    id
+  }
+  
+  # Hubungkan karakter 1 dengan Force Order
+  force1: assignForceOrder(input: {
+    characterId: $char1Id,
+    forceOrderId: $forceOrderId,
+    rank: "Jedi Padawan",
+    joinedYear: 14
+  }) {
+    id
+  }
+  
+  # Hubungkan karakter 2 dengan Force Order
+  force2: assignForceOrder(input: {
+    characterId: $char2Id,
+    forceOrderId: $forceOrderId,
+    rank: "Jedi Knight",
+    joinedYear: 14
+  }) {
+    id
+  }
+}
+```
+
+#### 3. Update Komprehensif Karakter
+
+Mutation ini mengupdate karakter beserta semua relasinya sekaligus:
+
+```graphql
+mutation UpdateCharacterComprehensive($characterId: ID!) {
+  # Update data karakter
+  updateChar: updateCharacter(input: {
+    id: $characterId,
+    species: "Human Force-sensitive",
+    homePlanetId: 1
+  }) {
+    id
+    name
+    species
+  }
+  
+  # Tambahkan senjata baru
+  newWeapon: createWeapon(input: {
+    name: "Crossguard Lightsaber",
+    type: "Lightsaber",
+    damage: 130,
+    range: "Close"
+  }) {
+    id
+  }
+  
+  # Tambahkan kendaraan baru
+  newVehicle: createVehicle(input: {
+    name: "TIE Silencer",
+    model: "TIE/vn space superiority fighter",
+    manufacturer: "Sienar-Jaemus Fleet Systems",
+    maxSpeed: 1200
+  }) {
+    id
+  }
+}
+```
+
+Kemudian, hubungkan entitas baru dan perbarui keanggotaan Force Order:
+
+```graphql
+mutation UpdateCharacterRelations(
+  $characterId: ID!, 
+  $weaponId: ID!, 
+  $vehicleId: ID!
+) {
+  # Hubungkan dengan senjata baru
+  assignWeapon: assignWeapon(input: {
+    characterId: $characterId,
+    weaponId: $weaponId
+  }) {
+    id
+  }
+  
+  # Hubungkan dengan kendaraan baru
+  assignVehicle: assignVehicle(input: {
+    characterId: $characterId,
+    vehicleId: $vehicleId
+  }) {
+    id
+  }
+  
+  # Perbarui keanggotaan Force Order
+  updateForceOrder: assignForceOrder(input: {
+    characterId: $characterId,
+    forceOrderId: "3", # Knights of Ren
+    rank: "Supreme Leader",
+    joinedYear: 34
+  }) {
+    id
+    name
+    forceOrders {
+      forceOrder {
+        name
+      }
+      rank
+    }
+  }
+}
+```
+
+### Contoh Mutation Individual
+
+#### Planet Mutations
+
+##### Membuat Planet Baru
 
 ```graphql
 mutation {
@@ -594,7 +879,7 @@ mutation {
 }
 ```
 
-### 2. Mengupdate Planet
+##### Mengupdate Planet
 
 ```graphql
 mutation {
@@ -611,7 +896,7 @@ mutation {
 }
 ```
 
-### 3. Menghapus Planet
+##### Menghapus Planet
 
 ```graphql
 mutation {
@@ -619,7 +904,9 @@ mutation {
 }
 ```
 
-### 4. Membuat Karakter Baru
+#### Character Mutations
+
+##### Membuat Karakter Baru
 
 ```graphql
 mutation {
@@ -638,7 +925,7 @@ mutation {
 }
 ```
 
-### 5. Mengupdate Karakter
+##### Mengupdate Karakter
 
 ```graphql
 mutation {
@@ -653,7 +940,7 @@ mutation {
 }
 ```
 
-### 6. Menghapus Karakter
+##### Menghapus Karakter
 
 ```graphql
 mutation {
@@ -661,7 +948,9 @@ mutation {
 }
 ```
 
-### 7. Membuat Kapal Baru
+#### Starship Mutations
+
+##### Membuat Kapal Baru
 
 ```graphql
 mutation {
@@ -678,7 +967,7 @@ mutation {
 }
 ```
 
-### 8. Mengupdate Kapal
+##### Mengupdate Kapal
 
 ```graphql
 mutation {
@@ -693,7 +982,7 @@ mutation {
 }
 ```
 
-### 9. Menghapus Kapal
+##### Menghapus Kapal
 
 ```graphql
 mutation {
@@ -701,7 +990,7 @@ mutation {
 }
 ```
 
-### 10. Menambahkan Karakter sebagai Pilot Kapal
+##### Menambahkan Karakter sebagai Pilot Kapal
 
 ```graphql
 mutation {
@@ -718,7 +1007,9 @@ mutation {
 }
 ```
 
-### 11. Membuat Senjata Baru
+#### Weapon Mutations
+
+##### Membuat Senjata Baru
 
 ```graphql
 mutation {
@@ -736,7 +1027,7 @@ mutation {
 }
 ```
 
-### 12. Mengupdate Senjata
+##### Mengupdate Senjata
 
 ```graphql
 mutation {
@@ -751,7 +1042,7 @@ mutation {
 }
 ```
 
-### 13. Menghapus Senjata
+##### Menghapus Senjata
 
 ```graphql
 mutation {
@@ -759,7 +1050,7 @@ mutation {
 }
 ```
 
-### 14. Menambahkan Senjata ke Karakter
+##### Menambahkan Senjata ke Karakter
 
 ```graphql
 mutation {
@@ -777,7 +1068,9 @@ mutation {
 }
 ```
 
-### 15. Membuat Kendaraan Baru
+#### Vehicle Mutations
+
+##### Membuat Kendaraan Baru
 
 ```graphql
 mutation {
@@ -795,7 +1088,7 @@ mutation {
 }
 ```
 
-### 16. Mengupdate Kendaraan
+##### Mengupdate Kendaraan
 
 ```graphql
 mutation {
@@ -810,7 +1103,7 @@ mutation {
 }
 ```
 
-### 17. Menghapus Kendaraan
+##### Menghapus Kendaraan
 
 ```graphql
 mutation {
@@ -818,7 +1111,7 @@ mutation {
 }
 ```
 
-### 18. Menambahkan Kendaraan ke Karakter
+##### Menambahkan Kendaraan ke Karakter
 
 ```graphql
 mutation {
@@ -836,7 +1129,9 @@ mutation {
 }
 ```
 
-### 19. Membuat Force Order Baru
+#### Force Order Mutations
+
+##### Membuat Force Order Baru
 
 ```graphql
 mutation {
@@ -854,7 +1149,7 @@ mutation {
 }
 ```
 
-### 20. Mengupdate Force Order
+##### Mengupdate Force Order
 
 ```graphql
 mutation {
@@ -869,7 +1164,7 @@ mutation {
 }
 ```
 
-### 21. Menghapus Force Order
+##### Menghapus Force Order
 
 ```graphql
 mutation {
@@ -877,7 +1172,7 @@ mutation {
 }
 ```
 
-### 22. Menambahkan Karakter ke Force Order dengan Rank
+##### Menambahkan Karakter ke Force Order dengan Rank
 
 ```graphql
 mutation {
