@@ -1,43 +1,218 @@
-# Star Wars GraphQL API - Contoh Query dan Mutation
+# Star Wars GraphQL API - Contoh Mutation dan Query
 
-Dokumen ini berisi contoh query dan mutation untuk menguji API GraphQL Star Wars. Contoh-contoh ini mencakup semua tabel dan operasi yang tersedia dalam API.
+Dokumen ini berisi contoh mutation dan query untuk menguji API GraphQL Star Wars, dengan fokus pada operasi update/delete untuk karakter dan kapal, serta operasi pada tabel Force Order.
 
-## Query Examples
+## 1. Mutation untuk Karakter
 
-### 1. Query untuk Mendapatkan Semua Data Karakter dengan Relasi
-
-Query ini menunjukkan kemampuan GraphQL untuk mengambil data karakter beserta semua relasinya dalam satu request.
+### 1.1 Membuat Karakter Baru
 
 ```graphql
-query GetCharacterWithRelations {
-  character(id: "1") {
+mutation CreateCharacter {
+  createCharacter(input: {
+    name: "Ahsoka Tano",
+    species: "Togruta",
+    homePlanetId: 4  # ID planet Naboo
+  }) {
     id
     name
     species
     homePlanet {
-      id
       name
-      climate
-      terrain
     }
+  }
+}
+```
+
+### 1.2 Mengupdate Karakter
+
+```graphql
+mutation UpdateCharacter {
+  updateCharacter(input: {
+    id: "1",  # ID Luke Skywalker
+    species: "Human Jedi",
+    homePlanetId: 1  # ID planet Tatooine
+  }) {
+    id
+    name
+    species
+    homePlanet {
+      name
+    }
+  }
+}
+```
+
+### 1.3 Menghapus Karakter
+
+```graphql
+mutation DeleteCharacter {
+  deleteCharacter(id: "15")  # ID karakter yang ingin dihapus
+}
+```
+
+## 2. Mutation untuk Kapal (Starship)
+
+### 2.1 Membuat Kapal Baru
+
+```graphql
+mutation CreateStarship {
+  createStarship(input: {
+    name: "Razor Crest",
+    model: "ST-70 Assault Ship",
+    manufacturer: "Nevarro Shipyards"
+  }) {
+    id
+    name
+    model
+    manufacturer
+  }
+}
+```
+
+### 2.2 Mengupdate Kapal
+
+```graphql
+mutation UpdateStarship {
+  updateStarship(input: {
+    id: "2",  # ID X-wing
+    model: "T-70 X-wing starfighter",
+    manufacturer: "Incom-FreiTek Corporation"
+  }) {
+    id
+    name
+    model
+    manufacturer
+  }
+}
+```
+
+### 2.3 Menghapus Kapal
+
+```graphql
+mutation DeleteStarship {
+  deleteStarship(id: "10")  # ID kapal yang ingin dihapus
+}
+```
+
+### 2.4 Menghubungkan Karakter dengan Kapal
+
+```graphql
+mutation AssignStarship {
+  assignStarship(input: {
+    characterId: "9",  # ID Rey
+    starshipId: "2"    # ID X-wing
+  }) {
+    id
+    name
     pilotedStarships {
       id
       name
       model
-      manufacturer
     }
-    weapons {
-      id
-      name
-      type
-      damage
+  }
+}
+```
+
+## 3. Mutation untuk Force Order
+
+### 3.1 Membuat Force Order Baru
+
+```graphql
+mutation CreateForceOrder {
+  createForceOrder(input: {
+    name: "Jedi Fallen Order",
+    side: "Light",
+    description: "Survivors of Order 66 led by Cal Kestis",
+    foundingYear: 14
+  }) {
+    id
+    name
+    side
+    description
+    foundingYear
+  }
+}
+```
+
+### 3.2 Mengupdate Force Order
+
+```graphql
+mutation UpdateForceOrder {
+  updateForceOrder(input: {
+    id: "3",  # ID Knights of Ren
+    description: "Dark side Force-users loyal to Supreme Leader Snoke and later Kylo Ren",
+    side: "Dark"
+  }) {
+    id
+    name
+    side
+    description
+    foundingYear
+  }
+}
+```
+
+### 3.3 Menghapus Force Order
+
+```graphql
+mutation DeleteForceOrder {
+  deleteForceOrder(id: "10")  # ID Force Order yang ingin dihapus
+}
+```
+
+### 3.4 Menghubungkan Karakter dengan Force Order
+
+```graphql
+mutation AssignForceOrder {
+  assignForceOrder(input: {
+    characterId: "12",  # ID Poe Dameron
+    forceOrderId: "6",  # ID Jedi Praxeum
+    rank: "Initiate",
+    joinedYear: 34
+  }) {
+    id
+    name
+    forceOrders {
+      rank
+      joinedYear
+      forceOrder {
+        name
+        side
+      }
     }
-    vehicles {
-      id
-      name
-      model
-      maxSpeed
+  }
+}
+```
+
+### 3.5 Menghapus Hubungan Karakter dengan Force Order
+
+```graphql
+mutation RemoveForceOrder {
+  removeForceOrder(input: {
+    characterId: "6",  # ID Darth Vader
+    forceOrderId: "1"  # ID Jedi Order
+  }) {
+    id
+    name
+    forceOrders {
+      forceOrder {
+        name
+      }
     }
+  }
+}
+```
+
+## 4. Query untuk Melihat Hasil Mutation
+
+### 4.1 Query Karakter dengan Force Orders
+
+```graphql
+query GetCharacterWithForceOrders {
+  character(id: "1") {  # ID Luke Skywalker
+    id
+    name
+    species
     forceOrders {
       rank
       joinedYear
@@ -52,32 +227,10 @@ query GetCharacterWithRelations {
 }
 ```
 
-### 2. Query untuk Mendapatkan Semua Planet dan Penduduknya
-
-Query ini menunjukkan relasi one-to-many antara planet dan karakter.
+### 4.2 Query Semua Force Orders dengan Anggota
 
 ```graphql
-query GetPlanetsWithResidents {
-  allPlanets {
-    id
-    name
-    climate
-    terrain
-    residents {
-      id
-      name
-      species
-    }
-  }
-}
-```
-
-### 3. Query untuk Mendapatkan Semua Force Order dan Anggotanya
-
-Query ini menunjukkan relasi many-to-many dengan data tambahan (rank dan joinedYear).
-
-```graphql
-query GetForceOrdersWithMembers {
+query GetAllForceOrders {
   allForceOrders {
     id
     name
@@ -97,245 +250,42 @@ query GetForceOrdersWithMembers {
 }
 ```
 
-### 4. Query untuk Mendapatkan Semua Senjata dan Penggunanya
-
-Query ini menunjukkan relasi many-to-many antara senjata dan karakter.
+### 4.3 Query Karakter dengan Semua Relasi
 
 ```graphql
-query GetWeaponsWithWielders {
-  allWeapons {
-    id
-    name
-    type
-    damage
-    range
-    wielders {
-      id
-      name
-      species
-    }
-  }
-}
-```
-
-### 5. Query untuk Mendapatkan Semua Kapal dan Pilotnya
-
-Query ini menunjukkan relasi many-to-many antara kapal dan karakter.
-
-```graphql
-query GetStarshipsWithPilots {
-  allStarships {
-    id
-    name
-    model
-    manufacturer
-    pilots {
-      id
-      name
-      species
-    }
-  }
-}
-```
-
-### 6. Query untuk Mendapatkan Semua Kendaraan dan Pengemudinya
-
-Query ini menunjukkan relasi many-to-many antara kendaraan dan karakter.
-
-```graphql
-query GetVehiclesWithDrivers {
-  allVehicles {
-    id
-    name
-    model
-    manufacturer
-    maxSpeed
-    drivers {
-      id
-      name
-      species
-    }
-  }
-}
-```
-
-## Mutation Examples
-
-### 1. Membuat Planet Baru
-
-Mutation ini menunjukkan cara membuat entitas baru.
-
-```graphql
-mutation CreateNewPlanet {
-  createPlanet(input: {
-    name: "Exegol",
-    climate: "Dry, Stormy",
-    terrain: "Desert, Rocky"
-  }) {
-    id
-    name
-    climate
-    terrain
-  }
-}
-```
-
-### 2. Membuat Karakter Baru dan Menghubungkannya dengan Planet
-
-Mutation ini menunjukkan cara membuat karakter dan mengaitkannya dengan planet yang sudah ada.
-
-```graphql
-mutation CreateCharacterWithPlanet {
-  createCharacter(input: {
-    name: "Rey Skywalker",
-    species: "Human",
-    homePlanetId: 1  # ID planet Tatooine
-  }) {
+query GetCharacterWithAllRelations {
+  character(id: "6") {  # ID Darth Vader
     id
     name
     species
     homePlanet {
       name
     }
-  }
-}
-```
-
-### 3. Membuat Force Order Baru
-
-Mutation ini menunjukkan cara membuat Force Order baru.
-
-```graphql
-mutation CreateNewForceOrder {
-  createForceOrder(input: {
-    name: "Nightsisters",
-    side: "Dark",
-    description: "Force-wielding witches from Dathomir",
-    foundingYear: -5000
-  }) {
-    id
-    name
-    side
-    description
-    foundingYear
-  }
-}
-```
-
-### 4. Menghubungkan Karakter dengan Force Order
-
-Mutation ini menunjukkan cara menghubungkan karakter dengan Force Order, termasuk data tambahan.
-
-```graphql
-mutation AssignCharacterToForceOrder {
-  assignForceOrder(input: {
-    characterId: "1",  # ID Luke Skywalker
-    forceOrderId: "1", # ID Jedi Order
-    rank: "Jedi Master",
-    joinedYear: 4
-  }) {
-    id
-    name
+    pilotedStarships {
+      name
+      model
+    }
+    weapons {
+      name
+      type
+    }
+    vehicles {
+      name
+      model
+    }
     forceOrders {
       rank
       joinedYear
       forceOrder {
         name
+        side
       }
     }
   }
 }
 ```
 
-### 5. Membuat Senjata Baru dan Menghubungkannya dengan Karakter
-
-Mutation ini menunjukkan cara membuat senjata baru dan mengaitkannya dengan karakter.
-
-```graphql
-mutation CreateAndAssignWeapon {
-  # Membuat senjata baru
-  newWeapon: createWeapon(input: {
-    name: "Darksaber",
-    type: "Lightsaber",
-    damage: 120,
-    range: "Close"
-  }) {
-    id
-    name
-  }
-  
-  # Mengaitkan senjata dengan karakter
-  # Catatan: Dalam penggunaan nyata, gunakan ID dari hasil mutation pertama
-  assignWeapon: assignWeapon(input: {
-    characterId: "1",  # ID Luke Skywalker
-    weaponId: "6"      # Ganti dengan ID senjata yang baru dibuat
-  }) {
-    id
-    name
-    weapons {
-      name
-      type
-    }
-  }
-}
-```
-
-### 6. Mengupdate Data Karakter
-
-Mutation ini menunjukkan cara mengupdate data yang sudah ada.
-
-```graphql
-mutation UpdateCharacterData {
-  updateCharacter(input: {
-    id: "1",  # ID Luke Skywalker
-    species: "Human Jedi"
-  }) {
-    id
-    name
-    species
-  }
-}
-```
-
-### 7. Membuat Kendaraan Baru
-
-Mutation ini menunjukkan cara membuat kendaraan baru.
-
-```graphql
-mutation CreateNewVehicle {
-  createVehicle(input: {
-    name: "Sandcrawler",
-    model: "Digger Crawler",
-    manufacturer: "Corellia Mining Corporation",
-    maxSpeed: 30
-  }) {
-    id
-    name
-    model
-    manufacturer
-    maxSpeed
-  }
-}
-```
-
-### 8. Menghapus Entitas
-
-Mutation ini menunjukkan cara menghapus data.
-
-```graphql
-mutation DeleteEntity {
-  # Menghapus senjata
-  deleteWeapon(id: "6")
-  
-  # Menghapus kendaraan
-  deleteVehicle(id: "6")
-  
-  # Menghapus Force Order
-  deleteForceOrder(id: "6")
-}
-```
-
-## Contoh Penggunaan dengan Variabel di Postman
+## 5. Contoh Penggunaan dengan Variabel di Postman
 
 Untuk menggunakan variabel di Postman:
 
@@ -345,12 +295,13 @@ Untuk menggunakan variabel di Postman:
 4. Di kolom "QUERY", masukkan query atau mutation
 5. Di kolom "GRAPHQL VARIABLES", masukkan variabel dalam format JSON
 
-Contoh:
+### 5.1 Contoh Update Karakter dengan Variabel
 
 Query:
 ```graphql
-query GetCharacter($id: ID!) {
-  character(id: $id) {
+mutation UpdateCharacter($input: CharacterInput!) {
+  updateCharacter(input: $input) {
+    id
     name
     species
   }
@@ -360,77 +311,20 @@ query GetCharacter($id: ID!) {
 Variables:
 ```json
 {
-  "id": "1"
-}
-```
-
-## Contoh Mutation Terintegrasi
-
-Berikut adalah contoh mutation terintegrasi yang membuat karakter lengkap dengan semua relasinya:
-
-```graphql
-mutation CreateCompleteCharacter {
-  # Buat karakter baru
-  newCharacter: createCharacter(input: {
-    name: "Ahsoka Tano",
-    species: "Togruta",
-    homePlanetId: 4
-  }) {
-    id
-    name
-  }
-  
-  # Buat senjata baru
-  newWeapon: createWeapon(input: {
-    name: "Dual Lightsabers",
-    type: "Lightsaber",
-    damage: 110,
-    range: "Close"
-  }) {
-    id
-    name
-  }
-  
-  # Buat kendaraan baru
-  newVehicle: createVehicle(input: {
-    name: "Jedi Starfighter",
-    model: "Delta-7B Aethersprite",
-    manufacturer: "Kuat Systems Engineering",
-    maxSpeed: 1150
-  }) {
-    id
-    name
+  "input": {
+    "id": "9",
+    "name": "Rey Skywalker",
+    "species": "Human Force-sensitive"
   }
 }
 ```
 
-Setelah mutation di atas berhasil, gunakan ID yang dihasilkan untuk mutation berikutnya:
+### 5.2 Contoh Assign Force Order dengan Variabel
 
+Query:
 ```graphql
-mutation AssignRelations($characterId: ID!, $weaponId: ID!, $vehicleId: ID!) {
-  # Hubungkan karakter dengan senjata
-  assignWeapon: assignWeapon(input: {
-    characterId: $characterId,
-    weaponId: $weaponId
-  }) {
-    id
-  }
-  
-  # Hubungkan karakter dengan kendaraan
-  assignVehicle: assignVehicle(input: {
-    characterId: $characterId,
-    vehicleId: $vehicleId
-  }) {
-    id
-  }
-  
-  # Hubungkan karakter dengan Force Order
-  assignForceOrder: assignForceOrder(input: {
-    characterId: $characterId,
-    forceOrderId: "1",
-    rank: "Jedi Padawan",
-    joinedYear: -22
-  }) {
+mutation AssignForceOrder($input: CharacterForceOrderInput!) {
+  assignForceOrder(input: $input) {
     id
     name
     forceOrders {
@@ -446,8 +340,81 @@ mutation AssignRelations($characterId: ID!, $weaponId: ID!, $vehicleId: ID!) {
 Variables:
 ```json
 {
-  "characterId": "8",
-  "weaponId": "6",
-  "vehicleId": "6"
+  "input": {
+    "characterId": "10",
+    "forceOrderId": "3",
+    "rank": "Master of the Knights of Ren",
+    "joinedYear": 28
+  }
 }
 ```
+
+## 6. Contoh Mutation Terintegrasi
+
+Berikut adalah contoh mutation terintegrasi yang menunjukkan alur lengkap untuk membuat dan mengupdate entitas:
+
+```graphql
+# Langkah 1: Buat Force Order baru
+mutation CreateNewForceOrder {
+  newForceOrder: createForceOrder(input: {
+    name: "Jedi Fallen Order",
+    side: "Light",
+    description: "Survivors of Order 66",
+    foundingYear: 14
+  }) {
+    id
+    name
+  }
+}
+
+# Langkah 2: Buat karakter baru
+mutation CreateNewCharacter {
+  newCharacter: createCharacter(input: {
+    name: "Cal Kestis",
+    species: "Human",
+    homePlanetId: 5  # ID Coruscant
+  }) {
+    id
+    name
+  }
+}
+
+# Langkah 3: Hubungkan karakter dengan Force Order
+# Gunakan ID yang didapat dari langkah 1 dan 2
+mutation AssignForceOrderToCharacter {
+  assignForceOrder(input: {
+    characterId: "16",  # ID Cal Kestis (hasil dari langkah 2)
+    forceOrderId: "11", # ID Jedi Fallen Order (hasil dari langkah 1)
+    rank: "Jedi Knight",
+    joinedYear: 14
+  }) {
+    id
+    name
+    forceOrders {
+      rank
+      joinedYear
+      forceOrder {
+        name
+        side
+      }
+    }
+  }
+}
+
+# Langkah 4: Update karakter
+mutation UpdateNewCharacter {
+  updateCharacter(input: {
+    id: "16",  # ID Cal Kestis
+    species: "Human Force-sensitive"
+  }) {
+    id
+    name
+    species
+    forceOrders {
+      rank
+      forceOrder {
+        name
+      }
+    }
+  }
+}
