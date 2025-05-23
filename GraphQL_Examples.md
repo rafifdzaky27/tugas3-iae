@@ -203,9 +203,259 @@ mutation RemoveForceOrder {
 }
 ```
 
-## 4. Query untuk Melihat Hasil Mutation
+## 4. Mutation untuk Senjata (Weapon)
 
-### 4.1 Query Karakter dengan Force Orders
+### 4.1 Membuat Senjata Baru
+
+```graphql
+mutation CreateWeapon {
+  createWeapon(input: {
+    name: "Darksaber",
+    type: "Lightsaber",
+    damage: 120,
+    range: "Close"
+  }) {
+    id
+    name
+    type
+    damage
+    range
+  }
+}
+```
+
+### 4.2 Mengupdate Senjata
+
+```graphql
+mutation UpdateWeapon {
+  updateWeapon(input: {
+    id: "1",  # ID Lightsaber
+    damage: 130,
+    range: "Medium"
+  }) {
+    id
+    name
+    type
+    damage
+    range
+  }
+}
+```
+
+### 4.3 Menghapus Senjata
+
+```graphql
+mutation DeleteWeapon {
+  deleteWeapon(id: "8")  # ID senjata yang ingin dihapus
+}
+```
+
+### 4.4 Menghubungkan Karakter dengan Senjata
+
+```graphql
+mutation AssignWeapon {
+  assignWeapon(input: {
+    characterId: "11",  # ID Finn
+    weaponId: "1"       # ID Lightsaber
+  }) {
+    id
+    name
+    weapons {
+      id
+      name
+      type
+      damage
+    }
+  }
+}
+```
+
+### 4.5 Menghapus Hubungan Karakter dengan Senjata
+
+```graphql
+mutation RemoveWeapon {
+  removeWeapon(input: {
+    characterId: "11",  # ID Finn
+    weaponId: "1"       # ID Lightsaber
+  }) {
+    id
+    name
+    weapons {
+      name
+    }
+  }
+}
+```
+
+## 5. Mutation untuk Kendaraan (Vehicle)
+
+### 5.1 Membuat Kendaraan Baru
+
+```graphql
+mutation CreateVehicle {
+  createVehicle(input: {
+    name: "Sandcrawler",
+    model: "Digger Crawler",
+    manufacturer: "Corellia Mining Corporation",
+    maxSpeed: 30
+  }) {
+    id
+    name
+    model
+    manufacturer
+    maxSpeed
+  }
+}
+```
+
+### 5.2 Mengupdate Kendaraan
+
+```graphql
+mutation UpdateVehicle {
+  updateVehicle(input: {
+    id: "3",  # ID Snowspeeder
+    model: "T-48 airspeeder",
+    maxSpeed: 700
+  }) {
+    id
+    name
+    model
+    manufacturer
+    maxSpeed
+  }
+}
+```
+
+### 5.3 Menghapus Kendaraan
+
+```graphql
+mutation DeleteVehicle {
+  deleteVehicle(id: "7")  # ID kendaraan yang ingin dihapus
+}
+```
+
+### 5.4 Menghubungkan Karakter dengan Kendaraan
+
+```graphql
+mutation AssignVehicle {
+  assignVehicle(input: {
+    characterId: "10",  # ID Kylo Ren
+    vehicleId: "6"      # ID AT-ST
+  }) {
+    id
+    name
+    vehicles {
+      id
+      name
+      model
+      maxSpeed
+    }
+  }
+}
+```
+
+### 5.5 Menghapus Hubungan Karakter dengan Kendaraan
+
+```graphql
+mutation RemoveVehicle {
+  removeVehicle(input: {
+    characterId: "10",  # ID Kylo Ren
+    vehicleId: "6"      # ID AT-ST
+  }) {
+    id
+    name
+    vehicles {
+      name
+    }
+  }
+}
+```
+
+## 6. Query untuk Melihat Hasil Mutation
+
+### 6.1 Query untuk Mendapatkan Semua Senjata dan Penggunanya
+
+```graphql
+query GetAllWeapons {
+  allWeapons {
+    id
+    name
+    type
+    damage
+    range
+    wielders {
+      id
+      name
+      species
+    }
+  }
+}
+```
+
+### 6.2 Query untuk Mendapatkan Detail Senjata Tertentu
+
+```graphql
+query GetWeaponDetails {
+  weapon(id: "1") {  # ID Lightsaber
+    id
+    name
+    type
+    damage
+    range
+    wielders {
+      id
+      name
+      species
+      homePlanet {
+        name
+      }
+    }
+  }
+}
+```
+
+### 6.3 Query untuk Mendapatkan Semua Kendaraan dan Pengemudinya
+
+```graphql
+query GetAllVehicles {
+  allVehicles {
+    id
+    name
+    model
+    manufacturer
+    maxSpeed
+    drivers {
+      id
+      name
+      species
+    }
+  }
+}
+```
+
+### 6.4 Query untuk Mendapatkan Detail Kendaraan Tertentu
+
+```graphql
+query GetVehicleDetails {
+  vehicle(id: "2") {  # ID AT-AT
+    id
+    name
+    model
+    manufacturer
+    maxSpeed
+    drivers {
+      id
+      name
+      species
+      homePlanet {
+        name
+      }
+    }
+  }
+}
+```
+
+### 6.5 Query Karakter dengan Force Orders
 
 ```graphql
 query GetCharacterWithForceOrders {
@@ -227,7 +477,7 @@ query GetCharacterWithForceOrders {
 }
 ```
 
-### 4.2 Query Semua Force Orders dengan Anggota
+### 6.6 Query Semua Force Orders dengan Anggota
 
 ```graphql
 query GetAllForceOrders {
@@ -250,7 +500,7 @@ query GetAllForceOrders {
 }
 ```
 
-### 4.3 Query Karakter dengan Semua Relasi
+### 6.7 Query Karakter dengan Semua Relasi
 
 ```graphql
 query GetCharacterWithAllRelations {
@@ -285,7 +535,7 @@ query GetCharacterWithAllRelations {
 }
 ```
 
-## 5. Contoh Penggunaan dengan Variabel di Postman
+## 7. Contoh Penggunaan dengan Variabel di Postman
 
 Untuk menggunakan variabel di Postman:
 
@@ -295,7 +545,7 @@ Untuk menggunakan variabel di Postman:
 4. Di kolom "QUERY", masukkan query atau mutation
 5. Di kolom "GRAPHQL VARIABLES", masukkan variabel dalam format JSON
 
-### 5.1 Contoh Update Karakter dengan Variabel
+### 7.1 Contoh Update Karakter dengan Variabel
 
 Query:
 ```graphql
@@ -319,7 +569,7 @@ Variables:
 }
 ```
 
-### 5.2 Contoh Assign Force Order dengan Variabel
+### 7.2 Contoh Assign Force Order dengan Variabel
 
 Query:
 ```graphql
@@ -349,7 +599,7 @@ Variables:
 }
 ```
 
-## 6. Contoh Mutation Terintegrasi
+## 8. Contoh Mutation Terintegrasi
 
 Berikut adalah contoh mutation terintegrasi yang menunjukkan alur lengkap untuk membuat dan mengupdate entitas:
 
