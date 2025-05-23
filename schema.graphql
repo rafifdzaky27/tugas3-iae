@@ -1,0 +1,206 @@
+type Query {
+  allCharacters: [Character!]!
+  character(id: ID!): Character
+  allPlanets: [Planet!]!
+  planet(id: ID!): Planet
+  allStarships: [Starship!]!
+  starship(id: ID!): Starship
+  allWeapons: [Weapon!]!
+  weapon(id: ID!): Weapon
+  allVehicles: [Vehicle!]!
+  vehicle(id: ID!): Vehicle
+  allForceOrders: [ForceOrder!]!
+  forceOrder(id: ID!): ForceOrder
+}
+
+type Mutation {
+  createPlanet(input: CreatePlanetInput!): Planet
+  updatePlanet(input: UpdatePlanetInput!): Planet
+  deletePlanet(id: ID!): Boolean
+  createCharacter(input: CreateCharacterInput!): Character
+  assignStarship(input: AssignStarshipInput!): Character
+  updateCharacter(input: UpdateCharacterInput!): Character
+  deleteCharacter(id: ID!): Boolean
+  createStarship(input: CreateStarshipInput!): Starship
+  updateStarship(input: UpdateStarshipInput!): Starship
+  deleteStarship(id: ID!): Boolean
+  createWeapon(input: CreateWeaponInput!): Weapon
+  updateWeapon(input: UpdateWeaponInput!): Weapon
+  deleteWeapon(id: ID!): Boolean
+  assignWeapon(input: AssignWeaponInput!): Character
+  createVehicle(input: CreateVehicleInput!): Vehicle
+  updateVehicle(input: UpdateVehicleInput!): Vehicle
+  deleteVehicle(id: ID!): Boolean
+  assignVehicle(input: AssignVehicleInput!): Character
+  createForceOrder(input: CreateForceOrderInput!): ForceOrder
+  updateForceOrder(input: UpdateForceOrderInput!): ForceOrder
+  deleteForceOrder(id: ID!): Boolean
+  assignForceOrder(input: AssignForceOrderInput!): Character
+}
+
+input CreatePlanetInput {
+  name: String!
+  climate: String
+  terrain: String
+}
+
+input UpdatePlanetInput {
+  id: ID!
+  name: String
+  climate: String
+  terrain: String
+}
+
+input CreateCharacterInput {
+  name: String!
+  species: String
+  homePlanetId: Int
+}
+
+input AssignStarshipInput {
+  characterId: ID!
+  starshipId: ID!
+}
+
+input UpdateCharacterInput {
+  id: ID!
+  name: String
+  species: String
+  homePlanetId: Int
+}
+
+input CreateStarshipInput {
+  name: String!
+  model: String
+  manufacturer: String
+}
+
+input UpdateStarshipInput {
+  id: ID!
+  name: String
+  model: String
+  manufacturer: String
+}
+
+input CreateWeaponInput {
+  name: String!
+  type: String
+  damage: Int
+  range: String
+}
+
+input UpdateWeaponInput {
+  id: ID!
+  name: String
+  type: String
+  damage: Int
+  range: String
+}
+
+input AssignWeaponInput {
+  characterId: ID!
+  weaponId: ID!
+}
+
+input CreateVehicleInput {
+  name: String!
+  model: String
+  manufacturer: String
+  maxSpeed: Int
+}
+
+input UpdateVehicleInput {
+  id: ID!
+  name: String
+  model: String
+  manufacturer: String
+  maxSpeed: Int
+}
+
+input AssignVehicleInput {
+  characterId: ID!
+  vehicleId: ID!
+}
+
+input CreateForceOrderInput {
+  name: String!
+  side: String
+  description: String
+  foundingYear: Int
+}
+
+input UpdateForceOrderInput {
+  id: ID!
+  name: String
+  side: String
+  description: String
+  foundingYear: Int
+}
+
+input AssignForceOrderInput {
+  characterId: ID!
+  forceOrderId: ID!
+  rank: String
+  joinedYear: Int
+}
+
+type Character {
+  id: ID!
+  name: String!
+  species: String
+  homePlanet: Planet
+  pilotedStarships: [Starship!]!
+  weapons: [Weapon!]!
+  vehicles: [Vehicle!]!
+  forceOrders: [CharacterForceOrder!]!
+}
+
+type Planet {
+  id: ID!
+  name: String!
+  climate: String
+  terrain: String
+  residents: [Character!]!
+}
+
+type Starship {
+  id: ID!
+  name: String!
+  model: String
+  manufacturer: String
+  pilots: [Character!]!
+}
+
+type Weapon {
+  id: ID!
+  name: String!
+  type: String
+  damage: Int
+  range: String
+  wielders: [Character!]!
+}
+
+type Vehicle {
+  id: ID!
+  name: String!
+  model: String
+  manufacturer: String
+  maxSpeed: Int
+  drivers: [Character!]!
+}
+
+type ForceOrder {
+  id: ID!
+  name: String!
+  side: String
+  description: String
+  foundingYear: Int
+  members: [CharacterForceOrder!]!
+}
+
+type CharacterForceOrder {
+  character: Character!
+  forceOrder: ForceOrder!
+  rank: String
+  joinedYear: Int
+}
